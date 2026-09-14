@@ -44,12 +44,9 @@ $("div[class='cell item']").each(function () {
 // 页面结构变了或被拦截时直接失败，避免静默写出空文件
 if (!list.length) throw new Error('未解析到任何帖子')
 
-// 同一天重复运行时按 id 合并，新快照覆盖旧字段
+// 同一天重复运行时直接覆盖，以最后一次（每晚 22:00）为准
 const file = path.join(DATA_DIR, `${beijingDay()}.json`)
 fs.mkdirSync(DATA_DIR, { recursive: true })
-const old = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : []
-const merged = new Map(old.map((v) => [v.id, v]))
-for (const v of list) merged.set(v.id, v)
-fs.writeFileSync(file, JSON.stringify([...merged.values()]))
+fs.writeFileSync(file, JSON.stringify(list))
 
-console.log(`${file}: 本次 ${list.length} 条，合并后 ${merged.size} 条`)
+console.log(`${file}: ${list.length} 条`)

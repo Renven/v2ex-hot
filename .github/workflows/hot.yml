@@ -14,15 +14,15 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # 数据单独放在 hot 分支，检出到 data/hot
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: hot
           path: data/hot
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
