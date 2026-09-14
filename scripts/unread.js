@@ -67,8 +67,9 @@ function visitedIds(profile) {
 
   const ids = new Set()
   for (const { url } of rows) {
-    const m = url.match(/v2ex\.com\/t\/(\d+)/)
-    if (m) ids.add(Number(m[1]))
+    // 只认 v2ex 域名（含 fast. / jp. 等子域），排除 google 跳转链接等
+    const m = url.match(/^https?:\/\/([a-z0-9-]+\.)?v2ex\.com\/t\/(\d+)/)
+    if (m) ids.add(Number(m[2]))
   }
   return ids
 }
