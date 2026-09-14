@@ -1,0 +1,12 @@
+{
+  "name": "v2ex-hot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gen": "node scripts/gen.js",
+    "unread": "node scripts/unread.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  }
+}

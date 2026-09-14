@@ -1,0 +1,42 @@
+name: Fetch V2EX hot
+
+on:
+  schedule:
+    - cron: '0 14 * * *' # UTC 14:00 = 北京时间 22:00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: fetch-hot
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 数据单独放在 hot 分支，检出到 data/hot
+      - uses: actions/checkout@v4
+        with:
+          ref: hot
+          path: data/hot
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: node scripts/gen.js
+
+      - name: Commit data
+        working-directory: data/hot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "hot: $(TZ=Asia/Shanghai date '+%F %T')"
+          git push origin HEAD:hot
