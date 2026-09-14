@@ -24,4 +24,5 @@ node scripts/unread.js 2026-9-8 2026-9-10   # 日期区间
 - 「看过」= Firefox 历史里访问过该帖子（任意时间）
 - 多天时同一帖子只归到第一次上榜的那天，每天一组，用空行分隔
 - 结果写入 `out/unread_<起>_<止>.txt` 并复制到剪贴板，到 OneTab →「Import / Export URLs」粘贴导入
+- 加 `--open`：每天的帖子在 Firefox 新窗口打开，在该窗口点 OneTab 存为一组，回终端按回车打开下一天
 - 默认使用历史库最近有写入的 Firefox 配置，可用环境变量 `FIREFOX_PROFILE` 指定目录

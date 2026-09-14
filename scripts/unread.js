@@ -4,14 +4,17 @@
 //   node scripts/unread.js 3                    最近 3 天（含今天）
 //   node scripts/unread.js 2026-9-10            某一天
 //   node scripts/unread.js 2026-9-8 2026-9-10   日期区间
+//   加 --open：每天在 Firefox 新窗口打开，存进 OneTab 后按回车打开下一天
 import { DatabaseSync } from 'node:sqlite'
 import { execFileSync } from 'node:child_process'
+import readline from 'node:readline/promises'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
 const RAW = 'https://raw.githubusercontent.com/Renven/v2ex-hot/hot/'
 const OUT_DIR = 'out'
+const FIREFOX = 'C:/Program Files/Mozilla Firefox/firefox.exe'
 
 const fmt = (d) => `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`
 const parse = (s) => {
@@ -74,7 +77,9 @@ function visitedIds(profile) {
   return ids
 }
 
-const days = dayList(process.argv.slice(2))
+const args = process.argv.slice(2)
+const open = args.includes('--open')
+const days = dayList(args.filter((a) => a !== '--open'))
 const profile = firefoxProfile()
 const visited = visitedIds(profile)
 console.log(`Firefox 配置：${path.basename(profile)}，历史中访问过 ${visited.size} 个帖子`)
@@ -96,7 +101,7 @@ for (const day of days) {
   unreadTotal += unread.length
   console.log(`${day}  ${topics.length} 条，已看 ${topics.length - unread.length}，未看 ${unread.length}`)
   if (unread.length) {
-    groups.push(unread.map((v) => `https://www.v2ex.com/t/${v.id} | ${v.title}`).join('\n'))
+    groups.push({ day, urls: unread.map((v) => `https://www.v2ex.com/t/${v.id}`), titles: unread.map((v) => v.title) })
   }
 }
 
@@ -107,10 +112,23 @@ if (!groups.length) {
 
 fs.mkdirSync(OUT_DIR, { recursive: true })
 const file = path.resolve(OUT_DIR, `unread_${days[0]}_${days.at(-1)}.txt`)
-fs.writeFileSync(file, groups.join('\n\n') + '\n')
+const text = groups.map((g) => g.urls.map((u, i) => `${u} | ${g.titles[i]}`).join('\n')).join('\n\n')
+fs.writeFileSync(file, text + '\n')
 execFileSync('powershell', [
   '-NoProfile',
   '-Command',
   `Get-Content -Raw -Encoding UTF8 -LiteralPath '${file}' | Set-Clipboard`,
 ])
 console.log(`合计 ${total} 条，未看 ${unreadTotal} 条 → ${file}（已复制到剪贴板）`)
+
+if (open) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+  for (const [i, g] of groups.entries()) {
+    // 一次调用内：先开新窗口，其余作为新标签页进入该窗口
+    execFileSync(FIREFOX, ['-new-window', g.urls[0], ...g.urls.slice(1).flatMap((u) => ['-new-tab', u])])
+    const next = groups[i + 1]
+    const hint = next ? `按回车打开 ${next.day}` : '按回车结束'
+    await rl.question(`已打开 ${g.day}（${g.urls.length} 个标签页），在该窗口点 OneTab 存为一组后，${hint}`)
+  }
+  rl.close()
+}
