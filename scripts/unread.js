@@ -124,8 +124,8 @@ console.log(`合计 ${total} 条，未看 ${unreadTotal} 条 → ${file}（已�
 if (open) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
   for (const [i, g] of groups.entries()) {
-    // 一次调用内：先开新窗口，其余作为新标签页进入该窗口
-    execFileSync(FIREFOX, ['-new-window', g.urls[0], ...g.urls.slice(1).flatMap((u) => ['-new-tab', u])])
+    // 一次传入多个网址时 Firefox 会把它们放进同一个新窗口；单个网址需 -new-window，否则会开在旧窗口
+    execFileSync(FIREFOX, g.urls.length > 1 ? g.urls : ['-new-window', g.urls[0]])
     const next = groups[i + 1]
     const hint = next ? `按回车打开 ${next.day}` : '按回车结束'
     await rl.question(`已打开 ${g.day}（${g.urls.length} 个标签页），在该窗口点 OneTab 存为一组后，${hint}`)
